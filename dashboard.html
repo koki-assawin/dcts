@@ -6,10 +6,12 @@
   <title>Dashboard - DCTS</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <link rel="stylesheet" href="css/style.css">
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="js/utils.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -247,6 +249,7 @@
   <script>
     let charts = {};
     let currentUser = null;
+    let fpDashStart = null, fpDashEnd = null;
 
     const CHART_COLORS = [
       '#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6',
@@ -260,6 +263,10 @@
 
       document.getElementById('userDisplayName').textContent = currentUser.displayName;
 
+      // Init BE date pickers
+      fpDashStart = DateUtils.initBEPicker(document.getElementById('dashStartDate'));
+      fpDashEnd   = DateUtils.initBEPicker(document.getElementById('dashEndDate'));
+
       // Set default: this year
       setThisYear(false);
 
@@ -270,21 +277,26 @@
       const today = new Date();
       const from = new Date(today);
       from.setDate(from.getDate() - days);
-      document.getElementById('dashEndDate').value = today.toISOString().split('T')[0];
-      document.getElementById('dashStartDate').value = from.toISOString().split('T')[0];
+      if (fpDashEnd)   fpDashEnd.setDate(today.toISOString().split('T')[0], true);
+      else document.getElementById('dashEndDate').value = today.toISOString().split('T')[0];
+      if (fpDashStart) fpDashStart.setDate(from.toISOString().split('T')[0], true);
+      else document.getElementById('dashStartDate').value = from.toISOString().split('T')[0];
       if (doLoad) applyDateFilter();
     }
 
     function setThisYear(doLoad = true) {
       const today = new Date();
-      document.getElementById('dashStartDate').value = `${today.getFullYear()}-01-01`;
-      document.getElementById('dashEndDate').value = today.toISOString().split('T')[0];
+      const y = today.getFullYear();
+      if (fpDashStart) fpDashStart.setDate(`${y}-01-01`, true);
+      else document.getElementById('dashStartDate').value = `${y}-01-01`;
+      if (fpDashEnd)   fpDashEnd.setDate(today.toISOString().split('T')[0], true);
+      else document.getElementById('dashEndDate').value = today.toISOString().split('T')[0];
       if (doLoad) applyDateFilter();
     }
 
     function clearFilter(doLoad = true) {
-      document.getElementById('dashStartDate').value = '';
-      document.getElementById('dashEndDate').value = '';
+      if (fpDashStart) fpDashStart.clear(); else document.getElementById('dashStartDate').value = '';
+      if (fpDashEnd)   fpDashEnd.clear();   else document.getElementById('dashEndDate').value = '';
       if (doLoad) applyDateFilter();
     }
 

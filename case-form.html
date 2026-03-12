@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>แบบฟอร์มเคส - DCTS</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <link rel="stylesheet" href="css/style.css">
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="js/utils.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -278,6 +280,9 @@
           </div>
         `;
         container.appendChild(sectionDiv);
+
+        // Init BE date picker สำหรับ date field ที่เพิ่งถูก render
+        sectionDiv.querySelectorAll('input[type="date"]').forEach(el => DateUtils.initBEPicker(el));
       });
     }
 
