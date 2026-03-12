@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DCTS - ระบบติดตามผลการชันสูตรโรคสัตว์</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+</head>
+<body class="login-bg flex items-center justify-center py-10 px-4">
+
+  <!-- Main Container -->
+  <div class="w-full max-w-3xl">
+
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-20 h-20 bg-white rounded-2xl shadow-lg mb-4">
+        <svg class="w-12 h-12 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+        </svg>
+      </div>
+      <h1 class="text-3xl font-bold text-white mb-1">ระบบติดตามผลการชันสูตรโรคสัตว์</h1>
+      <p class="text-indigo-200 text-lg">Disease Case Tracking System (DCTS)</p>
+    </div>
+
+    <!-- Login Card -->
+    <div class="bg-white rounded-2xl shadow-2xl overflow-hidden">
+
+      <!-- Card Header -->
+      <div class="px-8 pt-8 pb-4">
+        <h2 class="text-xl font-semibold text-gray-700 mb-1">เข้าสู่ระบบ</h2>
+        <p class="text-gray-500 text-sm">เลือกแผนกของคุณ แล้วกรอกรหัสผ่าน</p>
+      </div>
+
+      <!-- Role Selection -->
+      <div class="px-8 pb-4">
+        <p class="text-sm font-medium text-gray-600 mb-3">เลือกแผนก / บทบาท</p>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" id="roleGrid">
+          <!-- Roles will be rendered by JS -->
+        </div>
+      </div>
+
+      <!-- Password Section -->
+      <div class="px-8 pb-8" id="passwordSection" style="display:none;">
+        <div class="border-t border-gray-100 pt-6">
+          <div id="selectedRoleDisplay" class="flex items-center gap-3 mb-4 p-3 rounded-xl bg-gray-50">
+          </div>
+
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">รหัสผ่าน</label>
+          <div class="relative">
+            <input
+              type="password"
+              id="passwordInput"
+              placeholder="กรอกรหัสผ่าน"
+              class="form-input pr-10 text-base"
+              autocomplete="current-password"
+            >
+            <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Error message -->
+          <div id="errorMsg" class="hidden mt-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
+
+          <!-- Login button -->
+          <button
+            onclick="doLogin()"
+            id="loginBtn"
+            class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 text-base"
+          >
+            <span id="loginBtnText">เข้าสู่ระบบ</span>
+            <svg id="loginSpinner" class="hidden spinner w-5 h-5" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="px-8 py-4 bg-gray-50 border-t border-gray-100 text-center">
+        <p class="text-xs text-gray-400">DCTS v1.0 &bull; ระบบติดตามผลการชันสูตรโรคสัตว์</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast">
+    <div id="toastInner" class="rounded-xl shadow-lg px-4 py-3 flex items-start gap-3">
+      <span id="toastIcon" class="text-xl mt-0.5"></span>
+      <p id="toastMsg" class="text-sm font-medium"></p>
+    </div>
+  </div>
+
+  <script>
+    let selectedRole = null;
+
+    // Role icons
+    const ROLE_ICONS = {
+      epi:       { icon: '🔬', desc: 'รับเคส / ระบาดวิทยา' },
+      patho1:    { icon: '🔍', desc: 'บรรยายรอยโรค' },
+      bacteria:  { icon: '🧫', desc: 'ผลแบคทีเรีย' },
+      virology:  { icon: '🦠', desc: 'ผลไวรัส' },
+      parasite:  { icon: '🔭', desc: 'ผลปรสิต' },
+      patho2:    { icon: '📋', desc: 'สรุปผลพยาธิ' },
+      dashboard: { icon: '📊', desc: 'ดูรายงานภาพรวม' },
+    };
+
+    // Render role cards
+    function renderRoles() {
+      const grid = document.getElementById('roleGrid');
+      grid.innerHTML = '';
+      Object.entries(CONFIG.ROLES).forEach(([role, info]) => {
+        const ri = ROLE_ICONS[role] || { icon: '👤', desc: '' };
+        const card = document.createElement('div');
+        card.className = 'role-card bg-white border-2 border-gray-200 rounded-xl p-3 text-center hover:border-indigo-300 hover:bg-indigo-50 transition-all';
+        card.setAttribute('data-role', role);
+        card.innerHTML = `
+          <div class="text-2xl mb-1">${ri.icon}</div>
+          <div class="font-semibold text-gray-800 text-xs leading-tight">${info.label}</div>
+          <div class="text-gray-400 text-xs mt-0.5 leading-tight">${ri.desc}</div>
+        `;
+        card.addEventListener('click', () => selectRole(role));
+        grid.appendChild(card);
+      });
+    }
+
+    function selectRole(role) {
+      selectedRole = role;
+      // Update card styles
+      document.querySelectorAll('.role-card').forEach(card => {
+        if (card.getAttribute('data-role') === role) {
+          card.classList.remove('border-gray-200', 'bg-white');
+          card.classList.add('border-indigo-500', 'bg-indigo-50', 'selected');
+        } else {
+          card.classList.remove('border-indigo-500', 'bg-indigo-50', 'selected');
+          card.classList.add('border-gray-200', 'bg-white');
+        }
+      });
+
+      // Show password section
+      const info = CONFIG.ROLES[role];
+      const ri = ROLE_ICONS[role] || { icon: '👤', desc: '' };
+      const passwordSection = document.getElementById('passwordSection');
+      passwordSection.style.display = 'block';
+
+      document.getElementById('selectedRoleDisplay').innerHTML = `
+        <span class="text-2xl">${ri.icon}</span>
+        <div>
+          <p class="font-semibold text-gray-800 text-sm">${info.label}</p>
+          <p class="text-gray-500 text-xs">${ri.desc}</p>
+        </div>
+      `;
+
+      // Clear previous error and focus password
+      document.getElementById('errorMsg').classList.add('hidden');
+      document.getElementById('passwordInput').value = '';
+      setTimeout(() => document.getElementById('passwordInput').focus(), 100);
+    }
+
+    function togglePassword() {
+      const input = document.getElementById('passwordInput');
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    async function doLogin() {
+      if (!selectedRole) {
+        showToast('กรุณาเลือกแผนก / บทบาทก่อน', 'error');
+        return;
+      }
+      const password = document.getElementById('passwordInput').value.trim();
+      if (!password) {
+        showError('กรุณากรอกรหัสผ่าน');
+        return;
+      }
+
+      setLoading(true);
+      hideError();
+
+      try {
+        const result = await API.login(selectedRole, password);
+        if (result.success) {
+          Auth.login(result.role, result.displayName);
+          showToast('เข้าสู่ระบบสำเร็จ ยินดีต้อนรับ ' + result.displayName, 'success');
+          setTimeout(() => {
+            if (result.role === 'dashboard') {
+              window.location.href = 'dashboard.html';
+            } else {
+              window.location.href = 'case-list.html';
+            }
+          }, 800);
+        } else {
+          showError(result.error || 'รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่');
+          setLoading(false);
+        }
+      } catch (err) {
+        showError('เกิดข้อผิดพลาด: ' + err.message);
+        setLoading(false);
+      }
+    }
+
+    function setLoading(loading) {
+      const btn = document.getElementById('loginBtn');
+      const spinner = document.getElementById('loginSpinner');
+      const text = document.getElementById('loginBtnText');
+      if (loading) {
+        btn.disabled = true;
+        btn.classList.add('opacity-75');
+        spinner.classList.remove('hidden');
+        text.textContent = 'กำลังเข้าสู่ระบบ...';
+      } else {
+        btn.disabled = false;
+        btn.classList.remove('opacity-75');
+        spinner.classList.add('hidden');
+        text.textContent = 'เข้าสู่ระบบ';
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('errorMsg');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    function hideError() {
+      document.getElementById('errorMsg').classList.add('hidden');
+    }
+
+    function showToast(msg, type = 'info') {
+      const toast = document.getElementById('toast');
+      const inner = document.getElementById('toastInner');
+      const icon = document.getElementById('toastIcon');
+      const text = document.getElementById('toastMsg');
+
+      const styles = {
+        success: { bg: 'bg-green-600', icon: '✅' },
+        error:   { bg: 'bg-red-600',   icon: '❌' },
+        info:    { bg: 'bg-blue-600',  icon: 'ℹ️' },
+      };
+      const s = styles[type] || styles.info;
+      inner.className = `rounded-xl shadow-lg px-4 py-3 flex items-start gap-3 ${s.bg}`;
+      icon.textContent = s.icon;
+      text.className = 'text-sm font-medium text-white';
+      text.textContent = msg;
+
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    // Handle Enter key on password field
+    document.addEventListener('DOMContentLoaded', () => {
+      renderRoles();
+      document.getElementById('passwordInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') doLogin();
+      });
+
+      // Redirect if already logged in
+      const user = Auth.getUser();
+      if (user) {
+        window.location.href = user.role === 'dashboard' ? 'dashboard.html' : 'case-list.html';
+      }
+    });
+  </script>
+</body>
+</html>

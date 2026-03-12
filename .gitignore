@@ -1,0 +1,19 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.suo
+*.user
+
+# Sensitive
+*.env
+secrets.js
+
+# Temp
+*.tmp
+*.log
+
+# Windows Office temp
+~$*

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>แบบฟอร์มเคส - DCTS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Navigation Bar -->
+  <nav class="nav-bar">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <a href="case-list.html"
+            class="flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            <span class="text-sm font-medium hidden sm:inline">กลับรายการเคส</span>
+          </a>
+          <span class="text-gray-300 hidden sm:inline">|</span>
+          <div class="hidden sm:block">
+            <p class="font-bold text-gray-900 text-sm leading-tight">DCTS</p>
+            <p class="text-xs text-gray-500 leading-tight">แบบฟอร์มเคสชันสูตร</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div id="roleBadge" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100">
+            <span id="roleIcon" class="text-base"></span>
+            <div>
+              <p id="roleNameDisplay" class="text-xs font-semibold text-gray-700 leading-tight"></p>
+              <p id="roleDisplayName" class="text-xs text-gray-500 leading-tight"></p>
+            </div>
+          </div>
+          <button onclick="Auth.logout()"
+            class="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-sm font-medium transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            <span class="hidden sm:inline">ออกจากระบบ</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Loading -->
+    <div id="pageLoading" class="flex flex-col items-center justify-center py-24">
+      <svg class="spinner w-12 h-12 text-indigo-500 mb-3" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+      </svg>
+      <p class="text-gray-500">กำลังโหลดข้อมูลเคส...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="pageError" class="hidden flex flex-col items-center justify-center py-24">
+      <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-4">
+        <svg class="w-10 h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+      <p id="pageErrorMsg" class="text-gray-700 font-medium mb-1">ไม่พบข้อมูลเคส</p>
+      <a href="case-list.html" class="mt-3 text-indigo-600 hover:underline text-sm">กลับไปรายการเคส</a>
+    </div>
+
+    <!-- Content -->
+    <div id="pageContent" class="hidden space-y-5">
+
+      <!-- Case Summary Card -->
+      <div id="caseSummaryCard" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Case No.</span>
+              <span id="summCaseNo" class="font-mono font-bold text-xl text-indigo-700"></span>
+            </div>
+            <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
+              <span>📅 <span id="summDate"></span></span>
+              <span>🐾 <span id="summAnimal"></span></span>
+              <span>📍 <span id="summProvince"></span></span>
+            </div>
+          </div>
+          <div>
+            <span id="summConclusion" class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium badge-unknown">รอผล</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Role Edit Section indicator -->
+      <div id="roleEditBanner" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium">
+      </div>
+
+      <!-- Accordion Sections -->
+      <div id="accordionContainer" class="space-y-3">
+        <!-- Sections rendered by JS -->
+      </div>
+
+      <!-- Action Buttons -->
+      <div id="actionButtons" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <div class="flex flex-col sm:flex-row gap-3 justify-end">
+          <a href="case-list.html"
+            class="flex items-center justify-center gap-2 px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium text-sm transition-colors">
+            ยกเลิก / กลับ
+          </a>
+          <button onclick="saveCase()" id="saveBtn"
+            class="flex items-center justify-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium text-sm transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span id="saveBtnText">บันทึกข้อมูล</span>
+            <svg id="saveSpinner" class="hidden spinner w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast -->
+  <div id="toast" class="toast">
+    <div id="toastInner" class="rounded-xl shadow-lg px-4 py-3 flex items-start gap-3">
+      <span id="toastIcon" class="text-xl mt-0.5"></span>
+      <p id="toastMsg" class="text-sm font-medium text-white"></p>
+    </div>
+  </div>
+
+  <script>
+    const ROLE_ICONS = {
+      epi: '🔬', patho1: '🔍', bacteria: '🧫', virology: '🦠',
+      parasite: '🔭', patho2: '📋', dashboard: '📊'
+    };
+
+    const ROLE_COLORS = {
+      epi:      { bg: 'bg-blue-50',   text: 'text-blue-700',   border: 'border-blue-200',   header: 'bg-blue-600'   },
+      patho1:   { bg: 'bg-emerald-50',text: 'text-emerald-700',border: 'border-emerald-200',header: 'bg-emerald-600'},
+      bacteria: { bg: 'bg-amber-50',  text: 'text-amber-700',  border: 'border-amber-200',  header: 'bg-amber-600'  },
+      virology: { bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200', header: 'bg-violet-600' },
+      parasite: { bg: 'bg-red-50',    text: 'text-red-700',    border: 'border-red-200',    header: 'bg-red-600'    },
+      patho2:   { bg: 'bg-sky-50',    text: 'text-sky-700',    border: 'border-sky-200',    header: 'bg-sky-600'    },
+      dashboard:{ bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200', header: 'bg-indigo-600' },
+    };
+
+    let currentUser = null;
+    let caseData = null;
+    let configData = {};
+    let caseNo = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      currentUser = Auth.require();
+      if (!currentUser) return;
+
+      const roleInfo = CONFIG.ROLES[currentUser.role];
+      document.getElementById('roleBadge').classList.remove('hidden');
+      document.getElementById('roleIcon').textContent = ROLE_ICONS[currentUser.role] || '👤';
+      document.getElementById('roleNameDisplay').textContent = roleInfo ? roleInfo.label : currentUser.role;
+      document.getElementById('roleDisplayName').textContent = currentUser.displayName;
+
+      const params = new URLSearchParams(window.location.search);
+      caseNo = params.get('caseNo');
+      if (!caseNo) {
+        showPageError('ไม่พบหมายเลขเคส กรุณาเข้าผ่านหน้ารายการเคส');
+        return;
+      }
+
+      try {
+        // Load case and config in parallel
+        const [caseResult, configResult] = await Promise.all([
+          API.getCase(caseNo),
+          API.getConfig()
+        ]);
+
+        if (!caseResult.success) {
+          showPageError(caseResult.error || 'ไม่พบข้อมูลเคส: ' + caseNo);
+          return;
+        }
+
+        caseData = caseResult.case;
+        if (configResult.success) configData = configResult.config;
+
+        renderPage();
+        document.getElementById('pageLoading').classList.add('hidden');
+        document.getElementById('pageContent').classList.remove('hidden');
+
+      } catch (err) {
+        showPageError('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + err.message);
+      }
+    });
+
+    function renderPage() {
+      // Case summary
+      document.getElementById('summCaseNo').textContent = caseData.caseNo || '-';
+      document.getElementById('summDate').textContent = formatDateThai(caseData.date) || '-';
+      document.getElementById('summAnimal').textContent = caseData.animal || '-';
+      document.getElementById('summProvince').textContent = caseData.province || '-';
+
+      // Conclusion badge
+      const badge = getConclusionBadge(caseData.conclusion);
+      const summConc = document.getElementById('summConclusion');
+      summConc.className = `inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${badge.class}`;
+      summConc.textContent = badge.label;
+
+      // Role edit banner
+      const roleInfo = CONFIG.ROLES[currentUser.role];
+      const rc = ROLE_COLORS[currentUser.role] || ROLE_COLORS.dashboard;
+      const banner = document.getElementById('roleEditBanner');
+      if (roleInfo && roleInfo.editCols.length > 0) {
+        banner.className = `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium border ${rc.bg} ${rc.text} ${rc.border}`;
+        banner.innerHTML = `
+          <span class="text-lg">${ROLE_ICONS[currentUser.role]}</span>
+          <div>
+            <span class="font-semibold">โหมดแก้ไข: ${roleInfo.label}</span>
+            <span class="ml-2 font-normal opacity-75">สามารถแก้ไขฟิลด์ที่ไฮไลต์ได้</span>
+          </div>
+        `;
+        document.getElementById('actionButtons').classList.remove('hidden');
+      } else {
+        banner.className = `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium bg-gray-50 text-gray-600 border border-gray-200`;
+        banner.innerHTML = `
+          <span class="text-lg">👁️</span>
+          <span>โหมดดูข้อมูล — บทบาทของคุณ (<strong>${roleInfo ? roleInfo.label : currentUser.role}</strong>) ไม่มีสิทธิ์แก้ไขข้อมูลในหน้านี้</span>
+        `;
+      }
+
+      // Render accordion sections
+      renderAccordion();
+    }
+
+    function renderAccordion() {
+      const container = document.getElementById('accordionContainer');
+      container.innerHTML = '';
+      const roleInfo = CONFIG.ROLES[currentUser.role];
+      const myEditCols = roleInfo ? roleInfo.editCols : [];
+
+      CONFIG.SECTION_GROUPS.forEach((section, idx) => {
+        const rc = ROLE_COLORS[section.role] || ROLE_COLORS.dashboard;
+        const isMySection = section.role === currentUser.role;
+        const openByDefault = isMySection || idx === 0;
+
+        const sectionDiv = document.createElement('div');
+        sectionDiv.className = `bg-white rounded-2xl shadow-sm border overflow-hidden ${isMySection ? rc.border + ' ring-2 ring-offset-1 ring-' + section.role + '-200' : 'border-gray-100'}`;
+
+        // Check if section has any data
+        const hasData = section.fields.some(f => caseData[f] && caseData[f].toString().trim() !== '');
+
+        sectionDiv.innerHTML = `
+          <button onclick="toggleAccordion('acc-${idx}')"
+            class="w-full flex items-center justify-between px-5 py-4 text-left ${isMySection ? rc.header + ' text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'} transition-colors">
+            <div class="flex items-center gap-3">
+              <span class="text-xl">${section.icon}</span>
+              <div>
+                <span class="font-semibold text-sm">${section.label}</span>
+                ${isMySection ? '<span class="ml-2 text-xs opacity-75 font-normal">(หน้าที่ของคุณ)</span>' : ''}
+                ${!isMySection && !hasData ? '<span class="ml-2 text-xs opacity-60 font-normal">(ยังไม่มีข้อมูล)</span>' : ''}
+              </div>
+            </div>
+            <svg class="accordion-arrow w-5 h-5 ${openByDefault ? 'open' : ''}" id="arrow-${idx}"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <div class="accordion-content ${openByDefault ? 'open' : ''}" id="acc-${idx}">
+            <div class="px-5 py-4 space-y-4">
+              ${section.fields.map(field => renderField(field, myEditCols.includes(field))).join('')}
+            </div>
+          </div>
+        `;
+        container.appendChild(sectionDiv);
+      });
+    }
+
+    function renderField(field, isEditable) {
+      const label = CONFIG.FIELD_LABELS[field] || field;
+      const type = CONFIG.FIELD_TYPES[field] || 'text';
+      const value = caseData[field] || '';
+      const fieldId = 'field_' + field;
+
+      let inputHtml = '';
+
+      if (!isEditable) {
+        // Read-only display
+        const displayVal = field === 'limsLink' && value
+          ? `<a href="${escHtml(value)}" target="_blank" class="text-indigo-600 hover:underline break-all">${escHtml(value)}</a>`
+          : escHtml(value);
+        inputHtml = `
+          <div class="readonly-field ${!value ? 'empty' : ''}">
+            ${value ? displayVal : 'ยังไม่มีข้อมูล'}
+          </div>
+        `;
+      } else {
+        // Editable
+        const borderClass = 'border-indigo-300 ring-1 ring-indigo-200';
+        if (type === 'date') {
+          inputHtml = `<input type="date" id="${fieldId}" value="${escHtml(value)}" class="form-input ${borderClass}">`;
+        } else if (type === 'url') {
+          inputHtml = `<input type="url" id="${fieldId}" value="${escHtml(value)}" placeholder="https://..." class="form-input ${borderClass}">`;
+        } else if (type === 'text') {
+          inputHtml = `<input type="text" id="${fieldId}" value="${escHtml(value)}" class="form-input ${borderClass}">`;
+        } else if (type === 'textarea') {
+          inputHtml = `<textarea id="${fieldId}" rows="3" class="form-textarea ${borderClass}">${escHtml(value)}</textarea>`;
+        } else if (type.startsWith('select-config-')) {
+          const configKey = type.replace('select-config-', '');
+          const options = configData[configKey] || [];
+          let optionsHtml = `<option value="">-- เลือก --</option>`;
+          options.forEach(opt => {
+            optionsHtml += `<option value="${escHtml(opt)}" ${value === opt ? 'selected' : ''}>${escHtml(opt)}</option>`;
+          });
+          // Also add current value if not in config
+          if (value && !options.includes(value)) {
+            optionsHtml += `<option value="${escHtml(value)}" selected>${escHtml(value)}</option>`;
+          }
+          inputHtml = `<select id="${fieldId}" class="form-select ${borderClass}">${optionsHtml}</select>`;
+        } else {
+          inputHtml = `<input type="text" id="${fieldId}" value="${escHtml(value)}" class="form-input ${borderClass}">`;
+        }
+      }
+
+      return `
+        <div class="${isEditable ? 'field-editable pl-3' : ''}">
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">
+            ${label}
+            ${isEditable ? '<span class="ml-1 text-xs text-indigo-500 font-normal">✏️ แก้ไขได้</span>' : ''}
+          </label>
+          ${inputHtml}
+        </div>
+      `;
+    }
+
+    function toggleAccordion(id) {
+      const content = document.getElementById(id);
+      const idx = id.replace('acc-','');
+      const arrow = document.getElementById('arrow-' + idx);
+      if (content.classList.contains('open')) {
+        content.classList.remove('open');
+        arrow.classList.remove('open');
+      } else {
+        content.classList.add('open');
+        arrow.classList.add('open');
+      }
+    }
+
+    async function saveCase() {
+      const roleInfo = CONFIG.ROLES[currentUser.role];
+      if (!roleInfo || roleInfo.editCols.length === 0) {
+        showToast('บทบาทของคุณไม่มีสิทธิ์แก้ไขข้อมูล', 'error');
+        return;
+      }
+
+      const saveData = {};
+      roleInfo.editCols.forEach(field => {
+        const el = document.getElementById('field_' + field);
+        if (el) saveData[field] = el.value;
+      });
+
+      const btn = document.getElementById('saveBtn');
+      const spinner = document.getElementById('saveSpinner');
+      const text = document.getElementById('saveBtnText');
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+      text.textContent = 'กำลังบันทึก...';
+
+      try {
+        const result = await API.updateCase(caseNo, currentUser.role, saveData);
+        if (result.success) {
+          showToast('บันทึกข้อมูลสำเร็จ', 'success');
+          // Refresh case data
+          const refreshed = await API.getCase(caseNo);
+          if (refreshed.success) {
+            caseData = refreshed.case;
+            // Update summary
+            const badge = getConclusionBadge(caseData.conclusion);
+            const summConc = document.getElementById('summConclusion');
+            summConc.className = `inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${badge.class}`;
+            summConc.textContent = badge.label;
+          }
+        } else {
+          showToast('ไม่สามารถบันทึกได้: ' + (result.error || 'เกิดข้อผิดพลาด'), 'error');
+        }
+      } catch (err) {
+        showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        text.textContent = 'บันทึกข้อมูล';
+      }
+    }
+
+    function getConclusionBadge(conclusion) {
+      if (!conclusion) return { class: 'badge-unknown', label: 'รอผล' };
+      const c = conclusion.toString().trim();
+      if (c.includes('ไม่ได้')) return { class: 'badge-not-concluded', label: 'สรุปไม่ได้' };
+      if (c.includes('ได้')) return { class: 'badge-concluded', label: 'สรุปได้' };
+      if (c.includes('รอ')) return { class: 'badge-pending', label: 'รอผล' };
+      return { class: 'badge-unknown', label: c || 'รอผล' };
+    }
+
+    function formatDateThai(dateStr) {
+      if (!dateStr) return '-';
+      try {
+        const d = new Date(dateStr + 'T00:00:00');
+        return d.toLocaleDateString('th-TH', { day: '2-digit', month: 'long', year: 'numeric' });
+      } catch { return dateStr; }
+    }
+
+    function escHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function showPageError(msg) {
+      document.getElementById('pageLoading').classList.add('hidden');
+      document.getElementById('pageError').classList.remove('hidden');
+      document.getElementById('pageError').classList.add('flex');
+      document.getElementById('pageErrorMsg').textContent = msg;
+    }
+
+    function showToast(msg, type = 'info') {
+      const toast = document.getElementById('toast');
+      const inner = document.getElementById('toastInner');
+      const icon = document.getElementById('toastIcon');
+      const text = document.getElementById('toastMsg');
+      const styles = {
+        success: { bg: 'bg-green-600', icon: '✅' },
+        error:   { bg: 'bg-red-600',   icon: '❌' },
+        info:    { bg: 'bg-blue-600',  icon: 'ℹ️' },
+      };
+      const s = styles[type] || styles.info;
+      inner.className = `rounded-xl shadow-lg px-4 py-3 flex items-start gap-3 ${s.bg}`;
+      icon.textContent = s.icon;
+      text.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+  </script>
+</body>
+</html>

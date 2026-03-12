@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - DCTS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Navigation Bar -->
+  <nav class="nav-bar">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center w-9 h-9 bg-indigo-600 rounded-lg">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+          </div>
+          <div class="hidden sm:block">
+            <p class="font-bold text-gray-900 text-sm leading-tight">DCTS Dashboard</p>
+            <p class="text-xs text-gray-500 leading-tight">รายงานภาพรวมการชันสูตร</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-50">
+            <span class="text-base">📊</span>
+            <div>
+              <p id="userDisplayName" class="text-xs font-semibold text-indigo-700 leading-tight"></p>
+              <p class="text-xs text-indigo-500 leading-tight">Dashboard</p>
+            </div>
+          </div>
+          <button onclick="Auth.logout()"
+            class="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-sm font-medium transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            <span class="hidden sm:inline">ออกจากระบบ</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">รายงานภาพรวม</h1>
+        <p id="reportPeriod" class="text-sm text-gray-500 mt-0.5">กำลังโหลดข้อมูล...</p>
+      </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+      <div class="flex flex-col sm:flex-row gap-3 items-end">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">วันที่เริ่มต้น</label>
+          <input type="date" id="dashStartDate" class="form-input text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">วันที่สิ้นสุด</label>
+          <input type="date" id="dashEndDate" class="form-input text-sm">
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          <button onclick="applyDateFilter()" id="applyBtn"
+            class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 010 2H4a1 1 0 01-1-1zm0 5h16M7 14h10M9 19h6"/>
+            </svg>
+            <span id="applyBtnText">แสดงผล</span>
+            <svg id="applySpinner" class="hidden spinner w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+          </button>
+          <button onclick="setQuickFilter(30)"  class="px-3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-sm font-medium transition-colors">30 วัน</button>
+          <button onclick="setQuickFilter(90)"  class="px-3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-sm font-medium transition-colors">90 วัน</button>
+          <button onclick="setThisYear()"       class="px-3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-sm font-medium transition-colors">ปีนี้</button>
+          <button onclick="clearFilter()"       class="px-3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-sm font-medium transition-colors">ทั้งหมด</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="dashLoading" class="flex flex-col items-center justify-center py-24">
+      <svg class="spinner w-12 h-12 text-indigo-500 mb-3" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+      </svg>
+      <p class="text-gray-500">กำลังโหลดข้อมูล Dashboard...</p>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div id="dashContent" class="hidden space-y-6">
+
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="kpi-total rounded-2xl p-5 text-white shadow-sm card-hover">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-sm font-medium opacity-90">เคสทั้งหมด</p>
+            <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+            </div>
+          </div>
+          <p id="kpiTotal" class="text-3xl font-bold">-</p>
+          <p class="text-xs opacity-75 mt-1">เคสทั้งหมดในช่วงเวลา</p>
+        </div>
+        <div class="kpi-concluded rounded-2xl p-5 text-white shadow-sm card-hover">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-sm font-medium opacity-90">สรุปได้</p>
+            <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+          </div>
+          <p id="kpiConcluded" class="text-3xl font-bold">-</p>
+          <p id="kpiConcludedPct" class="text-xs opacity-75 mt-1">- % ของทั้งหมด</p>
+        </div>
+        <div class="kpi-not-concluded rounded-2xl p-5 text-white shadow-sm card-hover">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-sm font-medium opacity-90">สรุปไม่ได้</p>
+            <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+          </div>
+          <p id="kpiNotConcluded" class="text-3xl font-bold">-</p>
+          <p id="kpiNotConcludedPct" class="text-xs opacity-75 mt-1">- % ของทั้งหมด</p>
+        </div>
+        <div class="kpi-pending rounded-2xl p-5 text-white shadow-sm card-hover">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-sm font-medium opacity-90">รอผล</p>
+            <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+          </div>
+          <p id="kpiPending" class="text-3xl font-bold">-</p>
+          <p id="kpiPendingPct" class="text-xs opacity-75 mt-1">- % ของทั้งหมด</p>
+        </div>
+      </div>
+
+      <!-- Monthly Trend Chart (full width) -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <span class="w-1.5 h-5 bg-indigo-500 rounded-full inline-block"></span>
+          แนวโน้มรายเดือน
+        </h3>
+        <div class="chart-container" style="height:220px;">
+          <canvas id="chartMonthly"></canvas>
+        </div>
+      </div>
+
+      <!-- Row: Animal + Sample -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <span class="w-1.5 h-5 bg-blue-500 rounded-full inline-block"></span>
+            ชนิดสัตว์
+          </h3>
+          <div class="chart-container" style="height:260px;">
+            <canvas id="chartAnimal"></canvas>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <span class="w-1.5 h-5 bg-violet-500 rounded-full inline-block"></span>
+            ชนิดตัวอย่าง
+          </h3>
+          <div class="chart-container" style="height:260px;">
+            <canvas id="chartSample"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row: Province + Disease -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <span class="w-1.5 h-5 bg-emerald-500 rounded-full inline-block"></span>
+            จังหวัด / หน่วยงาน (สูงสุด 10)
+          </h3>
+          <div class="chart-container" style="height:320px;">
+            <canvas id="chartProvince"></canvas>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <span class="w-1.5 h-5 bg-amber-500 rounded-full inline-block"></span>
+            โรค / เชื้อที่พบ (สูงสุด 10)
+          </h3>
+          <div class="chart-container" style="height:320px;">
+            <canvas id="chartDisease"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Table -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <span class="w-1.5 h-5 bg-gray-500 rounded-full inline-block"></span>
+          สถิติชนิดสัตว์ (ตาราง)
+        </h3>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="text-xs">#</th>
+                <th class="text-xs">ชนิดสัตว์</th>
+                <th class="text-xs text-right">จำนวน (เคส)</th>
+                <th class="text-xs text-right">สัดส่วน</th>
+              </tr>
+            </thead>
+            <tbody id="animalTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Toast -->
+  <div id="toast" class="toast">
+    <div id="toastInner" class="rounded-xl shadow-lg px-4 py-3 flex items-start gap-3">
+      <span id="toastIcon" class="text-xl mt-0.5"></span>
+      <p id="toastMsg" class="text-sm font-medium text-white"></p>
+    </div>
+  </div>
+
+  <script>
+    let charts = {};
+    let currentUser = null;
+
+    const CHART_COLORS = [
+      '#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6',
+      '#0ea5e9','#ec4899','#14b8a6','#f97316','#84cc16',
+      '#06b6d4','#a855f7','#eab308','#78716c','#64748b'
+    ];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      currentUser = Auth.require(['dashboard']);
+      if (!currentUser) return;
+
+      document.getElementById('userDisplayName').textContent = currentUser.displayName;
+
+      // Set default: this year
+      setThisYear(false);
+
+      await loadDashboard();
+    });
+
+    function setQuickFilter(days, doLoad = true) {
+      const today = new Date();
+      const from = new Date(today);
+      from.setDate(from.getDate() - days);
+      document.getElementById('dashEndDate').value = today.toISOString().split('T')[0];
+      document.getElementById('dashStartDate').value = from.toISOString().split('T')[0];
+      if (doLoad) applyDateFilter();
+    }
+
+    function setThisYear(doLoad = true) {
+      const today = new Date();
+      document.getElementById('dashStartDate').value = `${today.getFullYear()}-01-01`;
+      document.getElementById('dashEndDate').value = today.toISOString().split('T')[0];
+      if (doLoad) applyDateFilter();
+    }
+
+    function clearFilter(doLoad = true) {
+      document.getElementById('dashStartDate').value = '';
+      document.getElementById('dashEndDate').value = '';
+      if (doLoad) applyDateFilter();
+    }
+
+    async function applyDateFilter() {
+      await loadDashboard();
+    }
+
+    async function loadDashboard() {
+      const startDate = document.getElementById('dashStartDate').value;
+      const endDate = document.getElementById('dashEndDate').value;
+
+      const btn = document.getElementById('applyBtn');
+      const spinner = document.getElementById('applySpinner');
+      const text = document.getElementById('applyBtnText');
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+      text.textContent = 'กำลังโหลด...';
+
+      document.getElementById('dashLoading').classList.remove('hidden');
+      document.getElementById('dashContent').classList.add('hidden');
+
+      try {
+        const result = await API.getDashboard(startDate, endDate);
+        if (!result.success) {
+          showToast('ไม่สามารถโหลดข้อมูล: ' + (result.error || 'ข้อผิดพลาดไม่ทราบสาเหตุ'), 'error');
+          document.getElementById('dashLoading').classList.add('hidden');
+          return;
+        }
+
+        renderDashboard(result, startDate, endDate);
+        document.getElementById('dashLoading').classList.add('hidden');
+        document.getElementById('dashContent').classList.remove('hidden');
+
+      } catch (err) {
+        showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+        document.getElementById('dashLoading').classList.add('hidden');
+      } finally {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        text.textContent = 'แสดงผล';
+      }
+    }
+
+    function renderDashboard(data, startDate, endDate) {
+      const { summary, animals, provinces, samples, diseases, monthly } = data;
+
+      // Period label
+      let periodText = 'ข้อมูลทั้งหมด';
+      if (startDate && endDate) {
+        periodText = `ช่วงวันที่ ${formatDateThai(startDate)} ถึง ${formatDateThai(endDate)}`;
+      } else if (startDate) {
+        periodText = `ตั้งแต่วันที่ ${formatDateThai(startDate)}`;
+      } else if (endDate) {
+        periodText = `ถึงวันที่ ${formatDateThai(endDate)}`;
+      }
+      document.getElementById('reportPeriod').textContent = periodText;
+
+      // KPI
+      const total = summary.total || 0;
+      document.getElementById('kpiTotal').textContent = total.toLocaleString();
+      document.getElementById('kpiConcluded').textContent = summary.concluded.toLocaleString();
+      document.getElementById('kpiNotConcluded').textContent = summary.notConcluded.toLocaleString();
+      document.getElementById('kpiPending').textContent = summary.pending.toLocaleString();
+
+      const pct = (n) => total > 0 ? ((n / total) * 100).toFixed(1) + ' %' : '0 %';
+      document.getElementById('kpiConcludedPct').textContent = pct(summary.concluded) + ' ของทั้งหมด';
+      document.getElementById('kpiNotConcludedPct').textContent = pct(summary.notConcluded) + ' ของทั้งหมด';
+      document.getElementById('kpiPendingPct').textContent = pct(summary.pending) + ' ของทั้งหมด';
+
+      // Charts
+      renderMonthlyChart(monthly);
+      renderAnimalChart(animals);
+      renderSampleChart(samples);
+      renderProvinceChart(provinces.slice(0, 10));
+      renderDiseaseChart(diseases.slice(0, 10));
+
+      // Animal table
+      const tbody = document.getElementById('animalTableBody');
+      tbody.innerHTML = (animals || []).map((a, i) => `
+        <tr>
+          <td class="text-xs text-gray-400">${i + 1}</td>
+          <td class="font-medium">${escHtml(a.name)}</td>
+          <td class="text-right font-mono font-semibold text-indigo-700">${a.count.toLocaleString()}</td>
+          <td class="text-right text-sm text-gray-500">${pct(a.count)}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="4" class="text-center text-gray-400 py-4">ไม่มีข้อมูล</td></tr>';
+    }
+
+    function destroyChart(id) {
+      if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+    }
+
+    function renderMonthlyChart(monthly) {
+      destroyChart('monthly');
+      const ctx = document.getElementById('chartMonthly').getContext('2d');
+      const labels = (monthly || []).map(m => {
+        const [y, mo] = m.month.split('-');
+        const d = new Date(parseInt(y), parseInt(mo) - 1, 1);
+        return d.toLocaleDateString('th-TH', { month: 'short', year: '2-digit' });
+      });
+      const values = (monthly || []).map(m => m.count);
+      charts['monthly'] = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'จำนวนเคส',
+            data: values,
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99,102,241,0.08)',
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#6366f1',
+            pointRadius: 4,
+            pointHoverRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { stepSize: 1, font: { family: 'Sarabun', size: 11 } },
+              grid: { color: '#f1f5f9' }
+            },
+            x: {
+              ticks: { font: { family: 'Sarabun', size: 11 } },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    function renderAnimalChart(animals) {
+      destroyChart('animal');
+      const ctx = document.getElementById('chartAnimal').getContext('2d');
+      const top = (animals || []).slice(0, 10);
+      charts['animal'] = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: top.map(a => a.name),
+          datasets: [{
+            data: top.map(a => a.count),
+            backgroundColor: CHART_COLORS.slice(0, top.length),
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: { font: { family: 'Sarabun', size: 11 }, padding: 8, boxWidth: 14 }
+            }
+          },
+          cutout: '55%'
+        }
+      });
+    }
+
+    function renderSampleChart(samples) {
+      destroyChart('sample');
+      const ctx = document.getElementById('chartSample').getContext('2d');
+      const top = (samples || []).slice(0, 8);
+      charts['sample'] = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: top.map(s => s.name),
+          datasets: [{
+            data: top.map(s => s.count),
+            backgroundColor: CHART_COLORS.slice(0, top.length),
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: { font: { family: 'Sarabun', size: 11 }, padding: 8, boxWidth: 14 }
+            }
+          }
+        }
+      });
+    }
+
+    function renderProvinceChart(provinces) {
+      destroyChart('province');
+      const ctx = document.getElementById('chartProvince').getContext('2d');
+      const data = [...(provinces || [])].reverse();
+      charts['province'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.map(p => p.name),
+          datasets: [{
+            label: 'จำนวนเคส',
+            data: data.map(p => p.count),
+            backgroundColor: 'rgba(16,185,129,0.75)',
+            borderColor: '#10b981',
+            borderWidth: 1,
+            borderRadius: 4,
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: { stepSize: 1, font: { family: 'Sarabun', size: 11 } },
+              grid: { color: '#f1f5f9' }
+            },
+            y: {
+              ticks: { font: { family: 'Sarabun', size: 11 } },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    function renderDiseaseChart(diseases) {
+      destroyChart('disease');
+      const ctx = document.getElementById('chartDisease').getContext('2d');
+      const data = [...(diseases || [])].reverse();
+      charts['disease'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.map(d => d.name),
+          datasets: [{
+            label: 'จำนวนเคส',
+            data: data.map(d => d.count),
+            backgroundColor: 'rgba(245,158,11,0.75)',
+            borderColor: '#f59e0b',
+            borderWidth: 1,
+            borderRadius: 4,
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: { stepSize: 1, font: { family: 'Sarabun', size: 11 } },
+              grid: { color: '#f1f5f9' }
+            },
+            y: {
+              ticks: { font: { family: 'Sarabun', size: 11 } },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    function formatDateThai(dateStr) {
+      if (!dateStr) return '-';
+      try {
+        const d = new Date(dateStr + 'T00:00:00');
+        return d.toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' });
+      } catch { return dateStr; }
+    }
+
+    function escHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function showToast(msg, type = 'info') {
+      const toast = document.getElementById('toast');
+      const inner = document.getElementById('toastInner');
+      const icon = document.getElementById('toastIcon');
+      const text = document.getElementById('toastMsg');
+      const styles = {
+        success: { bg: 'bg-green-600', icon: '✅' },
+        error:   { bg: 'bg-red-600',   icon: '❌' },
+        info:    { bg: 'bg-blue-600',  icon: 'ℹ️' },
+      };
+      const s = styles[type] || styles.info;
+      inner.className = `rounded-xl shadow-lg px-4 py-3 flex items-start gap-3 ${s.bg}`;
+      icon.textContent = s.icon;
+      text.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+  </script>
+</body>
+</html>

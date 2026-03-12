@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>รายการเคส - DCTS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Navigation Bar -->
+  <nav class="nav-bar">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo -->
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center w-9 h-9 bg-indigo-600 rounded-lg">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+          </div>
+          <div class="hidden sm:block">
+            <p class="font-bold text-gray-900 text-sm leading-tight">DCTS</p>
+            <p class="text-xs text-gray-500 leading-tight">ระบบติดตามผลการชันสูตร</p>
+          </div>
+        </div>
+
+        <!-- Right side -->
+        <div class="flex items-center gap-3">
+          <div id="roleBadge" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100">
+            <span id="roleIcon" class="text-base"></span>
+            <div class="text-right">
+              <p id="roleNameDisplay" class="text-xs font-semibold text-gray-700 leading-tight"></p>
+              <p id="roleDisplayName" class="text-xs text-gray-500 leading-tight"></p>
+            </div>
+          </div>
+          <button onclick="Auth.logout()"
+            class="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-sm font-medium transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            <span class="hidden sm:inline">ออกจากระบบ</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">รายการเคสชันสูตร</h1>
+        <p class="text-sm text-gray-500 mt-0.5">ค้นหาและจัดการข้อมูลเคสทั้งหมด</p>
+      </div>
+      <button id="addCaseBtn" onclick="openAddCaseModal()"
+        class="hidden items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium text-sm transition-colors shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        เพิ่มเคสใหม่
+      </button>
+    </div>
+
+    <!-- Search Section -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+      <div class="flex flex-col sm:flex-row gap-3">
+        <div class="flex-1">
+          <label class="block text-xs font-medium text-gray-600 mb-1">วันที่เริ่มต้น</label>
+          <input type="date" id="startDate" class="form-input text-sm">
+        </div>
+        <div class="flex-1">
+          <label class="block text-xs font-medium text-gray-600 mb-1">วันที่สิ้นสุด</label>
+          <input type="date" id="endDate" class="form-input text-sm">
+        </div>
+        <div class="flex-1 sm:flex-[2]">
+          <label class="block text-xs font-medium text-gray-600 mb-1">Case No. / ค้นหา</label>
+          <input type="text" id="searchCaseNo" placeholder="พิมพ์หมายเลขเคส..." class="form-input text-sm">
+        </div>
+        <div class="flex gap-2 sm:items-end">
+          <button onclick="doSearch()"
+            class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium text-sm transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            ค้นหา
+          </button>
+          <button onclick="clearSearch()"
+            class="flex items-center justify-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2.5 rounded-xl font-medium text-sm transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            <span class="hidden sm:inline">ล้าง</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Info -->
+    <div class="flex items-center justify-between mb-3">
+      <p id="resultCount" class="text-sm text-gray-500">กำลังโหลดข้อมูล...</p>
+    </div>
+
+    <!-- Table Card -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+      <!-- Loading State -->
+      <div id="loadingState" class="flex flex-col items-center justify-center py-20">
+        <svg class="spinner w-10 h-10 text-indigo-500 mb-3" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+        </svg>
+        <p class="text-gray-500 text-sm">กำลังโหลดข้อมูล...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="hidden flex-col items-center justify-center py-20">
+        <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+          <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <p class="text-gray-600 font-medium mb-1">ไม่พบข้อมูลเคส</p>
+        <p class="text-gray-400 text-sm">ลองเปลี่ยนเงื่อนไขการค้นหา หรือเพิ่มเคสใหม่</p>
+      </div>
+
+      <!-- Table -->
+      <div id="tableContainer" class="hidden table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="text-xs">Case No.</th>
+              <th class="text-xs">วันที่รับตัวอย่าง</th>
+              <th class="text-xs">ชนิดสัตว์</th>
+              <th class="text-xs">ชนิดตัวอย่าง</th>
+              <th class="text-xs">จังหวัด / หน่วยงาน</th>
+              <th class="text-xs">สรุปผล</th>
+              <th class="text-xs text-center">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="caseTableBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add Case Modal -->
+  <div id="addCaseModal" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" onclick="closeAddCaseModal()"></div>
+    <div class="fixed inset-0 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg fade-in">
+        <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
+          <div>
+            <h3 class="font-bold text-gray-900 text-lg">เพิ่มเคสใหม่</h3>
+            <p class="text-sm text-gray-500">กรอกข้อมูลเบื้องต้นของเคส</p>
+          </div>
+          <button onclick="closeAddCaseModal()" class="text-gray-400 hover:text-gray-600 p-1">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="px-6 py-5 space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">วันที่รับตัวอย่าง <span class="text-red-500">*</span></label>
+              <input type="date" id="new_date" class="form-input text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Case No. <span class="text-red-500">*</span></label>
+              <input type="text" id="new_caseNo" placeholder="เช่น PATH-2024-001" class="form-input text-sm">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">ชนิดสัตว์ <span class="text-red-500">*</span></label>
+              <select id="new_animal" class="form-select text-sm">
+                <option value="">-- เลือกชนิดสัตว์ --</option>
+                <option>โค</option><option>กระบือ</option><option>กวาง</option><option>ไก่</option>
+                <option>แพะ</option><option>หมู</option><option>แกะ</option><option>ม้า</option>
+                <option>สุนัข</option><option>แมว</option><option>นก</option><option>กระต่าย</option>
+                <option>อื่นๆ</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">ชนิดตัวอย่าง</label>
+              <select id="new_sample" class="form-select text-sm">
+                <option value="">-- เลือกชนิดตัวอย่าง --</option>
+                <option>ซาก</option><option>อวัยวะ</option><option>เลือด</option><option>ซีรัม</option>
+                <option>สวอบ</option><option>น้ำเหลือง</option><option>อุจจาระ</option><option>อื่นๆ</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">จังหวัด / หน่วยงาน <span class="text-red-500">*</span></label>
+            <input type="text" id="new_province" placeholder="เช่น เชียงใหม่ / ปศุสัตว์จังหวัด..." class="form-input text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Epidemiology Request</label>
+            <textarea id="new_epiRequest" rows="2" placeholder="รายละเอียดการร้องขอตรวจ..." class="form-textarea text-sm"></textarea>
+          </div>
+          <div id="addCaseError" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
+        </div>
+        <div class="px-6 pb-6 flex gap-3 justify-end">
+          <button onclick="closeAddCaseModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium transition-colors">
+            ยกเลิก
+          </button>
+          <button onclick="submitAddCase()" id="addCaseSubmitBtn"
+            class="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition-colors">
+            <span id="addCaseBtnText">บันทึกเคสใหม่</span>
+            <svg id="addCaseSpinner" class="hidden spinner w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast">
+    <div id="toastInner" class="rounded-xl shadow-lg px-4 py-3 flex items-start gap-3">
+      <span id="toastIcon" class="text-xl mt-0.5"></span>
+      <p id="toastMsg" class="text-sm font-medium text-white"></p>
+    </div>
+  </div>
+
+  <script>
+    const ROLE_ICONS = {
+      epi: '🔬', patho1: '🔍', bacteria: '🧫', virology: '🦠',
+      parasite: '🔭', patho2: '📋', dashboard: '📊'
+    };
+
+    let currentUser = null;
+    let allCases = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      currentUser = Auth.require(['epi','patho1','bacteria','virology','parasite','patho2']);
+      if (!currentUser) return;
+
+      // Setup nav
+      const roleInfo = CONFIG.ROLES[currentUser.role];
+      document.getElementById('roleBadge').classList.remove('hidden');
+      document.getElementById('roleIcon').textContent = ROLE_ICONS[currentUser.role] || '👤';
+      document.getElementById('roleNameDisplay').textContent = roleInfo ? roleInfo.label : currentUser.role;
+      document.getElementById('roleDisplayName').textContent = currentUser.displayName;
+
+      // Show add case button for epi
+      if (currentUser.role === 'epi') {
+        document.getElementById('addCaseBtn').classList.remove('hidden');
+        document.getElementById('addCaseBtn').classList.add('flex');
+      }
+
+      // Set default date range (last 90 days)
+      const today = new Date();
+      const ninetyDaysAgo = new Date(today);
+      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+      document.getElementById('endDate').value = today.toISOString().split('T')[0];
+      document.getElementById('startDate').value = ninetyDaysAgo.toISOString().split('T')[0];
+
+      // Load initial cases
+      await doSearch();
+
+      // Load config for dropdowns
+      loadConfig();
+    });
+
+    async function loadConfig() {
+      try {
+        const result = await API.getConfig();
+        if (result.success && result.config) {
+          // Update animal dropdown in modal
+          const animalSel = document.getElementById('new_animal');
+          if (result.config.animal && result.config.animal.length) {
+            animalSel.innerHTML = '<option value="">-- เลือกชนิดสัตว์ --</option>';
+            result.config.animal.forEach(a => {
+              animalSel.innerHTML += `<option value="${a}">${a}</option>`;
+            });
+          }
+          const sampleSel = document.getElementById('new_sample');
+          if (result.config.sample && result.config.sample.length) {
+            sampleSel.innerHTML = '<option value="">-- เลือกชนิดตัวอย่าง --</option>';
+            result.config.sample.forEach(s => {
+              sampleSel.innerHTML += `<option value="${s}">${s}</option>`;
+            });
+          }
+        }
+      } catch (e) {
+        // silent fail, defaults already in place
+      }
+    }
+
+    async function doSearch() {
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const caseNo = document.getElementById('searchCaseNo').value.trim();
+
+      showLoading();
+      try {
+        const result = await API.getCases(startDate, endDate, caseNo);
+        if (result.success) {
+          allCases = result.cases || [];
+          renderTable(allCases);
+          document.getElementById('resultCount').textContent =
+            `พบ ${result.total.toLocaleString()} เคส`;
+        } else {
+          showError('ไม่สามารถโหลดข้อมูลได้: ' + (result.error || 'ข้อผิดพลาดไม่ทราบสาเหตุ'));
+          showEmpty();
+        }
+      } catch (err) {
+        showError('เกิดข้อผิดพลาด: ' + err.message);
+        showEmpty();
+      }
+    }
+
+    function clearSearch() {
+      document.getElementById('startDate').value = '';
+      document.getElementById('endDate').value = '';
+      document.getElementById('searchCaseNo').value = '';
+      doSearch();
+    }
+
+    function renderTable(cases) {
+      const tbody = document.getElementById('caseTableBody');
+
+      if (!cases || cases.length === 0) {
+        showEmpty();
+        return;
+      }
+
+      tbody.innerHTML = cases.map(c => {
+        const badge = getConclusionBadge(c.conclusion);
+        const dateDisplay = c.date ? formatDateThai(c.date) : '-';
+        return `
+          <tr class="fade-in">
+            <td>
+              <span class="font-mono font-semibold text-indigo-700 text-sm">${escHtml(c.caseNo || '-')}</span>
+            </td>
+            <td class="text-sm text-gray-600 whitespace-nowrap">${dateDisplay}</td>
+            <td class="text-sm">${escHtml(c.animal || '-')}</td>
+            <td class="text-sm">${escHtml(c.sample || '-')}</td>
+            <td class="text-sm text-gray-600 max-w-[180px] truncate" title="${escHtml(c.province || '')}">${escHtml(c.province || '-')}</td>
+            <td>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.class}">
+                ${badge.label}
+              </span>
+            </td>
+            <td class="text-center">
+              <a href="case-form.html?caseNo=${encodeURIComponent(c.caseNo)}"
+                class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-medium transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+                แก้ไข / ดู
+              </a>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('loadingState').classList.add('hidden');
+      document.getElementById('emptyState').classList.add('hidden');
+      document.getElementById('tableContainer').classList.remove('hidden');
+    }
+
+    function getConclusionBadge(conclusion) {
+      if (!conclusion) return { class: 'badge-unknown', label: 'รอผล' };
+      const c = conclusion.toString().trim();
+      if (c.includes('ไม่ได้')) return { class: 'badge-not-concluded', label: 'สรุปไม่ได้' };
+      if (c.includes('ได้')) return { class: 'badge-concluded', label: 'สรุปได้' };
+      if (c.includes('รอ')) return { class: 'badge-pending', label: 'รอผล' };
+      return { class: 'badge-unknown', label: c || 'รอผล' };
+    }
+
+    function formatDateThai(dateStr) {
+      if (!dateStr) return '-';
+      try {
+        const d = new Date(dateStr + 'T00:00:00');
+        return d.toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' });
+      } catch { return dateStr; }
+    }
+
+    function escHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function showLoading() {
+      document.getElementById('loadingState').classList.remove('hidden');
+      document.getElementById('emptyState').classList.add('hidden');
+      document.getElementById('tableContainer').classList.add('hidden');
+    }
+
+    function showEmpty() {
+      document.getElementById('loadingState').classList.add('hidden');
+      document.getElementById('emptyState').classList.remove('hidden');
+      document.getElementById('emptyState').classList.add('flex');
+      document.getElementById('tableContainer').classList.add('hidden');
+    }
+
+    function showError(msg) {
+      showToast(msg, 'error');
+      document.getElementById('resultCount').textContent = 'เกิดข้อผิดพลาด';
+    }
+
+    // Add Case Modal
+    function openAddCaseModal() {
+      document.getElementById('addCaseModal').classList.remove('hidden');
+      document.getElementById('new_date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('addCaseError').classList.add('hidden');
+    }
+
+    function closeAddCaseModal() {
+      document.getElementById('addCaseModal').classList.add('hidden');
+      ['new_date','new_caseNo','new_animal','new_sample','new_province','new_epiRequest'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = id === 'new_date' ? '' : '';
+      });
+    }
+
+    async function submitAddCase() {
+      const data = {
+        date: document.getElementById('new_date').value,
+        caseNo: document.getElementById('new_caseNo').value.trim(),
+        animal: document.getElementById('new_animal').value,
+        sample: document.getElementById('new_sample').value,
+        province: document.getElementById('new_province').value.trim(),
+        epiRequest: document.getElementById('new_epiRequest').value.trim(),
+      };
+
+      if (!data.date || !data.caseNo || !data.province) {
+        document.getElementById('addCaseError').textContent = 'กรุณากรอกข้อมูลที่จำเป็น: วันที่, Case No. และจังหวัด/หน่วยงาน';
+        document.getElementById('addCaseError').classList.remove('hidden');
+        return;
+      }
+
+      const btn = document.getElementById('addCaseSubmitBtn');
+      const spinner = document.getElementById('addCaseSpinner');
+      const text = document.getElementById('addCaseBtnText');
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+      text.textContent = 'กำลังบันทึก...';
+
+      try {
+        const result = await API.addCase(currentUser.role, data);
+        if (result.success) {
+          closeAddCaseModal();
+          showToast('เพิ่มเคส ' + data.caseNo + ' สำเร็จ', 'success');
+          await doSearch();
+        } else {
+          document.getElementById('addCaseError').textContent = result.error || 'ไม่สามารถเพิ่มเคสได้';
+          document.getElementById('addCaseError').classList.remove('hidden');
+        }
+      } catch (err) {
+        document.getElementById('addCaseError').textContent = 'เกิดข้อผิดพลาด: ' + err.message;
+        document.getElementById('addCaseError').classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        text.textContent = 'บันทึกเคสใหม่';
+      }
+    }
+
+    function showToast(msg, type = 'info') {
+      const toast = document.getElementById('toast');
+      const inner = document.getElementById('toastInner');
+      const icon = document.getElementById('toastIcon');
+      const text = document.getElementById('toastMsg');
+      const styles = {
+        success: { bg: 'bg-green-600', icon: '✅' },
+        error:   { bg: 'bg-red-600',   icon: '❌' },
+        info:    { bg: 'bg-blue-600',  icon: 'ℹ️' },
+      };
+      const s = styles[type] || styles.info;
+      inner.className = `rounded-xl shadow-lg px-4 py-3 flex items-start gap-3 ${s.bg}`;
+      icon.textContent = s.icon;
+      text.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    // Allow search on Enter key
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('searchCaseNo').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') doSearch();
+      });
+    });
+  </script>
+</body>
+</html>
