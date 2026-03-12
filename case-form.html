@@ -9,6 +9,7 @@
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/utils.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
 
@@ -302,7 +303,9 @@
         // Editable
         const borderClass = 'border-indigo-300 ring-1 ring-indigo-200';
         if (type === 'date') {
-          inputHtml = `<input type="date" id="${fieldId}" value="${escHtml(value)}" class="form-input ${borderClass}">`;
+          // แปลง BE→CE เพราะ <input type="date"> ต้องการ CE (ISO format)
+          const ceValue = DateUtils.toISO(value);
+          inputHtml = `<input type="date" id="${fieldId}" value="${escHtml(ceValue)}" class="form-input ${borderClass}">`;
         } else if (type === 'url') {
           inputHtml = `<input type="url" id="${fieldId}" value="${escHtml(value)}" placeholder="https://..." class="form-input ${borderClass}">`;
         } else if (type === 'text') {
@@ -406,11 +409,7 @@
     }
 
     function formatDateThai(dateStr) {
-      if (!dateStr) return '-';
-      try {
-        const d = new Date(dateStr + 'T00:00:00');
-        return d.toLocaleDateString('th-TH', { day: '2-digit', month: 'long', year: 'numeric' });
-      } catch { return dateStr; }
+      return DateUtils.formatThaiLong(dateStr);
     }
 
     function escHtml(str) {

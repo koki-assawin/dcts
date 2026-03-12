@@ -10,6 +10,7 @@
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/utils.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
 
@@ -306,7 +307,8 @@
       document.getElementById('dashContent').classList.add('hidden');
 
       try {
-        const result = await API.getDashboard(startDate, endDate);
+        // แปลง CE → BE ก่อนส่ง GAS เพราะ Sheet เก็บวันที่เป็น พ.ศ.
+        const result = await API.getDashboard(DateUtils.toBE(startDate), DateUtils.toBE(endDate));
         if (!result.success) {
           showToast('ไม่สามารถโหลดข้อมูล: ' + (result.error || 'ข้อผิดพลาดไม่ทราบสาเหตุ'), 'error');
           document.getElementById('dashLoading').classList.add('hidden');
@@ -552,11 +554,7 @@
     }
 
     function formatDateThai(dateStr) {
-      if (!dateStr) return '-';
-      try {
-        const d = new Date(dateStr + 'T00:00:00');
-        return d.toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' });
-      } catch { return dateStr; }
+      return DateUtils.formatThai(dateStr);
     }
 
     function escHtml(str) {
