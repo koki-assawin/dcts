@@ -55,7 +55,7 @@ function loginUser(role, password) {
     if (!sheet) { createDefaultUsers(ss); sheet = ss.getSheetByName(USERS_SHEET); }
     const data = sheet.getDataRange().getValues();
     for (let i = 1; i < data.length; i++) {
-      if (data[i][0] === role && data[i][1] === password) {
+      if (data[i][0].toString() === role && data[i][1].toString() === password) {
         return { success: true, role: data[i][0], displayName: data[i][2] };
       }
     }
