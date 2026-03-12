@@ -345,7 +345,7 @@
       }
 
       tbody.innerHTML = cases.map(c => {
-        const badge = getConclusionBadge(c.conclusion);
+        const badge = getConclusionBadge(c.conclusionStatus || c.conclusion);
         const dateDisplay = c.date ? formatDateThai(c.date) : '-';
         return `
           <tr class="fade-in">
@@ -382,8 +382,8 @@
     function getConclusionBadge(conclusion) {
       if (!conclusion) return { class: 'badge-unknown', label: 'รอผล' };
       const c = conclusion.toString().trim();
-      if (c.includes('ไม่ได้')) return { class: 'badge-not-concluded', label: 'สรุปไม่ได้' };
-      if (c.includes('ได้')) return { class: 'badge-concluded', label: 'สรุปได้' };
+      if (c.includes('ไม่สามารถ') || c.includes('ไม่ได้')) return { class: 'badge-not-concluded', label: 'สรุปไม่ได้' };
+      if (c.includes('สามารถ') || c.includes('ได้')) return { class: 'badge-concluded', label: 'สรุปได้' };
       if (c.includes('รอ')) return { class: 'badge-pending', label: 'รอผล' };
       return { class: 'badge-unknown', label: c || 'รอผล' };
     }

@@ -165,9 +165,10 @@ function getDashboardData(startDate, endDate) {
       if (endDate && rowDate > parseDate(endDate + 'T23:59:59')) continue;
     }
     stats.total++;
-    const conclusion = row[COL.CONCLUSION].toString().trim();
-    if (conclusion.includes('ได้') && !conclusion.includes('ไม่ได้')) stats.concluded++;
-    else if (conclusion.includes('ไม่ได้')) stats.notConcluded++;
+    // ใช้คอลัมน์ P (FINAL_CAUSE = สรุป) เป็นหลัก, fallback ไปคอลัมน์ N (CONCLUSION)
+    const conclusion = (row[COL.FINAL_CAUSE] || row[COL.CONCLUSION]).toString().trim();
+    if (conclusion.includes('ไม่สามารถ') || conclusion.includes('ไม่ได้')) stats.notConcluded++;
+    else if (conclusion.includes('สามารถ') || conclusion.includes('ได้')) stats.concluded++;
     else stats.pending++;
     const animal = row[COL.ANIMAL] || 'ไม่ระบุ';
     stats.animals[animal] = (stats.animals[animal] || 0) + 1;
@@ -234,6 +235,7 @@ function rowToObject(row, rowIndex) {
     bacteria: row[COL.BACTERIA], virusResult: row[COL.VIRUS_RESULT],
     virusDetail: row[COL.VIRUS_DETAIL], parasite: row[COL.PARASITE],
     conclusion: row[COL.CONCLUSION], histoResult: row[COL.HISTO_RESULT], finalCause: row[COL.FINAL_CAUSE],
+    conclusionStatus: (row[COL.FINAL_CAUSE] || row[COL.CONCLUSION]).toString().trim(),
   };
 }
 
