@@ -3,7 +3,7 @@
 // ===========================
 
 const CONFIG = {
-  GAS_URL: 'YOUR_GAS_DEPLOYMENT_URL',
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbxurqlx_jiIuLJNSmsG0edVWJiZjkxiIAD4b6-KcTtvqBtMtWLXTZXQWg36eFtVHX_YBg/exec',
   ROLES: {
     epi:       { label: 'ระบาดวิทยา',         color: '#3B82F6', bg: 'bg-blue-500',   light: 'bg-blue-50',   text: 'text-blue-700',   border: 'border-blue-200',   editCols: ['date','caseNo','animal','sample','province','epiRequest','sscsResult'] },
     patho1:    { label: 'พยาธิวิทยา (ผ่าซาก)', color: '#10B981', bg: 'bg-emerald-500', light: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', editCols: ['grossLesion','limsLink'] },
