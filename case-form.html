@@ -12,6 +12,15 @@
   <script src="js/auth.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="js/utils.js"></script>
+  <style>
+    .lab-card { transition: box-shadow .15s; }
+    .lab-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+    .field-row { display: flex; gap: 8px; align-items: flex-start; }
+    .field-row .field-label { min-width: 90px; max-width: 90px; font-size: .7rem; color: #9ca3af; padding-top: 1px; }
+    .field-row .field-val { font-size: .75rem; color: #374151; line-height: 1.5; word-break: break-word; }
+    .no-data-hint { font-size: .72rem; color: #d1d5db; font-style: italic; }
+    .my-section-wrap { border-radius: 1rem; overflow: hidden; }
+  </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
 
@@ -54,7 +63,7 @@
   </nav>
 
   <!-- Main Content -->
-  <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
 
     <!-- Loading -->
     <div id="pageLoading" class="flex flex-col items-center justify-center py-24">
@@ -77,39 +86,46 @@
     </div>
 
     <!-- Content -->
-    <div id="pageContent" class="hidden space-y-5">
+    <div id="pageContent" class="hidden space-y-4">
 
-      <!-- Case Summary Card -->
-      <div id="caseSummaryCard" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+      <!-- ── Case Summary Card ── -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-4">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
           <div class="flex-1">
             <div class="flex items-center gap-2 mb-1">
-              <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Case No.</span>
+              <span class="text-xs font-medium text-gray-400 uppercase tracking-wide">Case No.</span>
               <span id="summCaseNo" class="font-mono font-bold text-xl text-indigo-700"></span>
             </div>
             <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
               <span>📅 <span id="summDate"></span></span>
               <span>🐾 <span id="summAnimal"></span></span>
+              <span>📦 <span id="summSample"></span></span>
               <span>📍 <span id="summProvince"></span></span>
             </div>
           </div>
-          <div>
+          <div class="flex items-center gap-2 flex-wrap">
             <span id="summConclusion" class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium badge-unknown">รอผล</span>
           </div>
         </div>
       </div>
 
-      <!-- Role Edit Section indicator -->
-      <div id="roleEditBanner" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium">
+      <!-- ── Role Edit Banner ── -->
+      <div id="roleEditBanner" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium"></div>
+
+      <!-- ── My Section (Full Editable Form) ── -->
+      <div id="mySection" class="hidden my-section-wrap shadow-sm"></div>
+
+      <!-- ── Other Labs Summary Grid ── -->
+      <div id="otherSectionsWrap" class="hidden">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">ข้อมูลแผนกอื่น</span>
+          <div class="flex-1 h-px bg-gray-200"></div>
+        </div>
+        <div id="otherSectionsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
       </div>
 
-      <!-- Accordion Sections -->
-      <div id="accordionContainer" class="space-y-3">
-        <!-- Sections rendered by JS -->
-      </div>
-
-      <!-- Action Buttons -->
-      <div id="actionButtons" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+      <!-- ── Action Buttons ── -->
+      <div id="actionButtons" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 px-5 py-4">
         <div class="flex flex-col sm:flex-row gap-3 justify-end">
           <a href="case-list.html"
             class="flex items-center justify-center gap-2 px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium text-sm transition-colors">
@@ -146,13 +162,23 @@
     };
 
     const ROLE_COLORS = {
-      epi:      { bg: 'bg-blue-50',   text: 'text-blue-700',   border: 'border-blue-200',   header: 'bg-blue-600'   },
-      patho1:   { bg: 'bg-emerald-50',text: 'text-emerald-700',border: 'border-emerald-200',header: 'bg-emerald-600'},
-      bacteria: { bg: 'bg-amber-50',  text: 'text-amber-700',  border: 'border-amber-200',  header: 'bg-amber-600'  },
-      virology: { bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200', header: 'bg-violet-600' },
-      parasite: { bg: 'bg-red-50',    text: 'text-red-700',    border: 'border-red-200',    header: 'bg-red-600'    },
-      patho2:   { bg: 'bg-sky-50',    text: 'text-sky-700',    border: 'border-sky-200',    header: 'bg-sky-600'    },
-      dashboard:{ bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200', header: 'bg-indigo-600' },
+      epi:      { bg: 'bg-blue-50',    text: 'text-blue-700',    border: 'border-blue-200',    header: 'bg-blue-600'    },
+      patho1:   { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', header: 'bg-emerald-600' },
+      bacteria: { bg: 'bg-amber-50',   text: 'text-amber-700',   border: 'border-amber-200',   header: 'bg-amber-600'   },
+      virology: { bg: 'bg-violet-50',  text: 'text-violet-700',  border: 'border-violet-200',  header: 'bg-violet-600'  },
+      parasite: { bg: 'bg-red-50',     text: 'text-red-700',     border: 'border-red-200',     header: 'bg-red-600'     },
+      patho2:   { bg: 'bg-sky-50',     text: 'text-sky-700',     border: 'border-sky-200',     header: 'bg-sky-600'     },
+      dashboard:{ bg: 'bg-indigo-50',  text: 'text-indigo-700',  border: 'border-indigo-200',  header: 'bg-indigo-600'  },
+    };
+
+    // Fields to show in compact card per section (key fields only)
+    const CARD_FIELDS = {
+      epi:      ['epiRequest', 'sscsResult'],
+      patho1:   ['grossLesion', 'limsLink'],
+      bacteria: ['bacteria'],
+      virology: ['virusResult', 'virusDetail'],
+      parasite: ['parasite'],
+      patho2:   ['finalCause', 'histoResult'],
     };
 
     let currentUser = null;
@@ -178,43 +204,36 @@
       }
 
       try {
-        // Load case and config in parallel
         const [caseResult, configResult] = await Promise.all([
           API.getCase(caseNo),
           API.getConfig()
         ]);
-
-        if (!caseResult.success) {
-          showPageError(caseResult.error || 'ไม่พบข้อมูลเคส: ' + caseNo);
-          return;
-        }
-
+        if (!caseResult.success) { showPageError(caseResult.error || 'ไม่พบข้อมูลเคส: ' + caseNo); return; }
         caseData = caseResult.case;
         if (configResult.success) configData = configResult.config;
-
         renderPage();
         document.getElementById('pageLoading').classList.add('hidden');
         document.getElementById('pageContent').classList.remove('hidden');
-
       } catch (err) {
         showPageError('เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + err.message);
       }
     });
 
+    // ── Render Page ──────────────────────────────────────────────
     function renderPage() {
-      // Case summary
+      // Top summary
       document.getElementById('summCaseNo').textContent = caseData.caseNo || '-';
       document.getElementById('summDate').textContent = formatDateThai(caseData.date) || '-';
       document.getElementById('summAnimal').textContent = caseData.animal || '-';
+      document.getElementById('summSample').textContent = caseData.sample || '-';
       document.getElementById('summProvince').textContent = caseData.province || '-';
 
-      // Conclusion badge
-      const badge = getConclusionBadge(caseData.conclusion);
+      const badge = getConclusionBadge(caseData.conclusionStatus || caseData.conclusion);
       const summConc = document.getElementById('summConclusion');
       summConc.className = `inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${badge.class}`;
       summConc.textContent = badge.label;
 
-      // Role edit banner
+      // Role banner
       const roleInfo = CONFIG.ROLES[currentUser.role];
       const rc = ROLE_COLORS[currentUser.role] || ROLE_COLORS.dashboard;
       const banner = document.getElementById('roleEditBanner');
@@ -222,95 +241,134 @@
         banner.className = `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium border ${rc.bg} ${rc.text} ${rc.border}`;
         banner.innerHTML = `
           <span class="text-lg">${ROLE_ICONS[currentUser.role]}</span>
-          <div>
-            <span class="font-semibold">โหมดแก้ไข: ${roleInfo.label}</span>
-            <span class="ml-2 font-normal opacity-75">สามารถแก้ไขฟิลด์ที่ไฮไลต์ได้</span>
-          </div>
-        `;
+          <div><span class="font-semibold">โหมดแก้ไข: ${roleInfo.label}</span>
+          <span class="ml-2 font-normal opacity-70">— กรอกข้อมูลส่วนของคุณด้านล่าง แล้วกด "บันทึก"</span></div>`;
         document.getElementById('actionButtons').classList.remove('hidden');
       } else {
         banner.className = `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium bg-gray-50 text-gray-600 border border-gray-200`;
-        banner.innerHTML = `
-          <span class="text-lg">👁️</span>
-          <span>โหมดดูข้อมูล — บทบาทของคุณ (<strong>${roleInfo ? roleInfo.label : currentUser.role}</strong>) ไม่มีสิทธิ์แก้ไขข้อมูลในหน้านี้</span>
-        `;
+        banner.innerHTML = `<span class="text-lg">👁️</span>
+          <span>โหมดดูข้อมูล — บทบาท <strong>${roleInfo ? roleInfo.label : currentUser.role}</strong> ไม่มีสิทธิ์แก้ไข</span>`;
       }
 
-      // Render accordion sections
-      renderAccordion();
+      renderSections();
     }
 
-    function renderAccordion() {
-      const container = document.getElementById('accordionContainer');
-      container.innerHTML = '';
-      const roleInfo = CONFIG.ROLES[currentUser.role];
+    // ── Render Sections ──────────────────────────────────────────
+    function renderSections() {
+      const roleInfo   = CONFIG.ROLES[currentUser.role];
       const myEditCols = roleInfo ? roleInfo.editCols : [];
+      const mySecDiv   = document.getElementById('mySection');
+      const otherGrid  = document.getElementById('otherSectionsGrid');
+      mySecDiv.innerHTML  = '';
+      otherGrid.innerHTML = '';
+      let hasOther = false;
 
-      CONFIG.SECTION_GROUPS.forEach((section, idx) => {
-        const rc = ROLE_COLORS[section.role] || ROLE_COLORS.dashboard;
-        const isMySection = section.role === currentUser.role;
-        const openByDefault = isMySection || idx === 0;
-
-        const sectionDiv = document.createElement('div');
-        sectionDiv.className = `bg-white rounded-2xl shadow-sm border overflow-hidden ${isMySection ? rc.border + ' ring-2 ring-offset-1 ring-' + section.role + '-200' : 'border-gray-100'}`;
-
-        // Check if section has any data
-        const hasData = section.fields.some(f => caseData[f] && caseData[f].toString().trim() !== '');
-
-        sectionDiv.innerHTML = `
-          <button onclick="toggleAccordion('acc-${idx}')"
-            class="w-full flex items-center justify-between px-5 py-4 text-left ${isMySection ? rc.header + ' text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'} transition-colors">
-            <div class="flex items-center gap-3">
-              <span class="text-xl">${section.icon}</span>
-              <div>
-                <span class="font-semibold text-sm">${section.label}</span>
-                ${isMySection ? '<span class="ml-2 text-xs opacity-75 font-normal">(หน้าที่ของคุณ)</span>' : ''}
-                ${!isMySection && !hasData ? '<span class="ml-2 text-xs opacity-60 font-normal">(ยังไม่มีข้อมูล)</span>' : ''}
+      CONFIG.SECTION_GROUPS.forEach(section => {
+        if (section.role === currentUser.role && myEditCols.length > 0) {
+          // ── Full editable form ──
+          mySecDiv.classList.remove('hidden');
+          const rc = ROLE_COLORS[section.role];
+          mySecDiv.innerHTML = `
+            <div class="border-2 ${rc.border} rounded-2xl overflow-hidden bg-white">
+              <div class="flex items-center gap-3 px-5 py-3.5 ${rc.header} text-white">
+                <span class="text-xl">${section.icon}</span>
+                <span class="font-bold">${section.label}</span>
+                <span class="text-xs font-normal opacity-75 ml-1">— ส่วนที่คุณต้องกรอก</span>
               </div>
-            </div>
-            <svg class="accordion-arrow w-5 h-5 ${openByDefault ? 'open' : ''}" id="arrow-${idx}"
-              fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-            </svg>
-          </button>
-          <div class="accordion-content ${openByDefault ? 'open' : ''}" id="acc-${idx}">
-            <div class="px-5 py-4 space-y-4">
-              ${section.fields.map(field => renderField(field, myEditCols.includes(field))).join('')}
-            </div>
-          </div>
-        `;
-        container.appendChild(sectionDiv);
-
-        // Init BE date picker สำหรับ date field ที่เพิ่งถูก render
-        sectionDiv.querySelectorAll('input[type="date"]').forEach(el => DateUtils.initBEPicker(el));
+              <div class="px-5 py-5 space-y-4">
+                ${section.fields.map(f => renderField(f, myEditCols.includes(f))).join('')}
+              </div>
+            </div>`;
+          mySecDiv.querySelectorAll('input[type="date"]').forEach(el => DateUtils.initBEPicker(el));
+        } else {
+          // ── Compact summary card ──
+          hasOther = true;
+          const card = document.createElement('div');
+          card.innerHTML = buildSummaryCard(section);
+          if (card.firstElementChild) otherGrid.appendChild(card.firstElementChild);
+        }
       });
+
+      if (hasOther) document.getElementById('otherSectionsWrap').classList.remove('hidden');
     }
 
+    // ── Build compact summary card ────────────────────────────────
+    function buildSummaryCard(section) {
+      const rc = ROLE_COLORS[section.role] || ROLE_COLORS.dashboard;
+      const cardFields = CARD_FIELDS[section.role] || section.fields;
+      const hasData = section.fields.some(f => caseData[f] && caseData[f].toString().trim());
+
+      const rows = cardFields.map(f => {
+        const raw = (caseData[f] || '').toString().trim();
+        const label = CONFIG.FIELD_LABELS[f] || f;
+        if (!raw) return `<div class="field-row"><span class="field-label">${label}</span><span class="no-data-hint">—</span></div>`;
+
+        if (f === 'limsLink') {
+          return `<div class="field-row">
+            <span class="field-label">${label}</span>
+            <a href="${escHtml(raw)}" target="_blank"
+              class="field-val text-indigo-600 hover:underline flex items-center gap-1">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+              </svg>ดูภาพ LIMS</a></div>`;
+        }
+
+        if (f === 'finalCause') {
+          const badge = getConclusionBadge(raw);
+          const isStatusVal = raw.includes('สามารถ') || raw.includes('ได้') || raw.includes('รอ') || raw.includes('ตัวอย่าง') || raw.includes('สิ่ง');
+          if (isStatusVal) {
+            return `<div class="field-row">
+              <span class="field-label">${label}</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${badge.class}">${badge.label} <span class="ml-1 opacity-70 font-normal">${raw.length > 18 ? raw.substring(0,18)+'…' : raw}</span></span>
+            </div>`;
+          }
+        }
+
+        const disp = raw.length > 130 ? raw.substring(0, 130) + '…' : raw;
+        return `<div class="field-row">
+          <span class="field-label">${label}</span>
+          <span class="field-val">${escHtml(disp)}</span></div>`;
+      }).join('');
+
+      return `
+        <div class="lab-card bg-white rounded-xl border ${rc.border} overflow-hidden">
+          <div class="flex items-center justify-between px-4 py-2.5 ${rc.bg} border-b ${rc.border}">
+            <div class="flex items-center gap-2">
+              <span class="text-base leading-none">${section.icon}</span>
+              <span class="text-xs font-bold ${rc.text}">${section.label}</span>
+            </div>
+            ${hasData
+              ? `<span class="text-xs ${rc.text} opacity-60 font-medium flex items-center gap-0.5">
+                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                  มีข้อมูล</span>`
+              : `<span class="text-xs text-gray-400 flex items-center gap-0.5">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  รอข้อมูล</span>`}
+          </div>
+          <div class="px-4 py-3 space-y-1.5 min-h-[56px]">
+            ${hasData ? rows : `<p class="no-data-hint">ยังไม่มีการบันทึกข้อมูลในส่วนนี้</p>`}
+          </div>
+        </div>`;
+    }
+
+    // ── Render editable/readonly field ───────────────────────────
     function renderField(field, isEditable) {
       const label = CONFIG.FIELD_LABELS[field] || field;
-      const type = CONFIG.FIELD_TYPES[field] || 'text';
+      const type  = CONFIG.FIELD_TYPES[field] || 'text';
       const value = caseData[field] || '';
       const fieldId = 'field_' + field;
-
       let inputHtml = '';
 
       if (!isEditable) {
-        // Read-only display
         const displayVal = field === 'limsLink' && value
           ? `<a href="${escHtml(value)}" target="_blank" class="text-indigo-600 hover:underline break-all">${escHtml(value)}</a>`
           : escHtml(value);
-        inputHtml = `
-          <div class="readonly-field ${!value ? 'empty' : ''}">
-            ${value ? displayVal : 'ยังไม่มีข้อมูล'}
-          </div>
-        `;
+        inputHtml = `<div class="readonly-field ${!value ? 'empty' : ''}">${value ? displayVal : 'ยังไม่มีข้อมูล'}</div>`;
       } else {
-        // Editable
         const borderClass = 'border-indigo-300 ring-1 ring-indigo-200';
         if (type === 'date') {
-          // แปลง BE→CE เพราะ <input type="date"> ต้องการ CE (ISO format)
-          const ceValue = DateUtils.toISO(value);
-          inputHtml = `<input type="date" id="${fieldId}" value="${escHtml(ceValue)}" class="form-input ${borderClass}">`;
+          inputHtml = `<input type="date" id="${fieldId}" value="${escHtml(DateUtils.toISO(value))}" class="form-input ${borderClass}">`;
         } else if (type === 'url') {
           inputHtml = `<input type="url" id="${fieldId}" value="${escHtml(value)}" placeholder="https://..." class="form-input ${borderClass}">`;
         } else if (type === 'text') {
@@ -324,10 +382,8 @@
           options.forEach(opt => {
             optionsHtml += `<option value="${escHtml(opt)}" ${value === opt ? 'selected' : ''}>${escHtml(opt)}</option>`;
           });
-          // Also add current value if not in config
-          if (value && !options.includes(value)) {
+          if (value && !options.includes(value))
             optionsHtml += `<option value="${escHtml(value)}" selected>${escHtml(value)}</option>`;
-          }
           inputHtml = `<select id="${fieldId}" class="form-select ${borderClass}">${optionsHtml}</select>`;
         } else {
           inputHtml = `<input type="text" id="${fieldId}" value="${escHtml(value)}" class="form-input ${borderClass}">`;
@@ -337,34 +393,18 @@
       return `
         <div class="${isEditable ? 'field-editable pl-3' : ''}">
           <label class="block text-sm font-medium text-gray-700 mb-1.5">
-            ${label}
-            ${isEditable ? '<span class="ml-1 text-xs text-indigo-500 font-normal">✏️ แก้ไขได้</span>' : ''}
+            ${label}${isEditable ? ' <span class="ml-1 text-xs text-indigo-500 font-normal">✏️ แก้ไขได้</span>' : ''}
           </label>
           ${inputHtml}
-        </div>
-      `;
+        </div>`;
     }
 
-    function toggleAccordion(id) {
-      const content = document.getElementById(id);
-      const idx = id.replace('acc-','');
-      const arrow = document.getElementById('arrow-' + idx);
-      if (content.classList.contains('open')) {
-        content.classList.remove('open');
-        arrow.classList.remove('open');
-      } else {
-        content.classList.add('open');
-        arrow.classList.add('open');
-      }
-    }
-
+    // ── Save ──────────────────────────────────────────────────────
     async function saveCase() {
       const roleInfo = CONFIG.ROLES[currentUser.role];
       if (!roleInfo || roleInfo.editCols.length === 0) {
-        showToast('บทบาทของคุณไม่มีสิทธิ์แก้ไขข้อมูล', 'error');
-        return;
+        showToast('บทบาทของคุณไม่มีสิทธิ์แก้ไขข้อมูล', 'error'); return;
       }
-
       const saveData = {};
       roleInfo.editCols.forEach(field => {
         const el = document.getElementById('field_' + field);
@@ -374,23 +414,22 @@
       const btn = document.getElementById('saveBtn');
       const spinner = document.getElementById('saveSpinner');
       const text = document.getElementById('saveBtnText');
-      btn.disabled = true;
-      spinner.classList.remove('hidden');
-      text.textContent = 'กำลังบันทึก...';
+      btn.disabled = true; spinner.classList.remove('hidden'); text.textContent = 'กำลังบันทึก...';
 
       try {
         const result = await API.updateCase(caseNo, currentUser.role, saveData);
         if (result.success) {
           showToast('บันทึกข้อมูลสำเร็จ', 'success');
-          // Refresh case data
           const refreshed = await API.getCase(caseNo);
           if (refreshed.success) {
             caseData = refreshed.case;
-            // Update summary
-            const badge = getConclusionBadge(caseData.conclusion);
+            // Update top summary badge
+            const badge = getConclusionBadge(caseData.conclusionStatus || caseData.conclusion);
             const summConc = document.getElementById('summConclusion');
             summConc.className = `inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${badge.class}`;
             summConc.textContent = badge.label;
+            // Re-render other sections to reflect new data
+            renderSections();
           }
         } else {
           showToast('ไม่สามารถบันทึกได้: ' + (result.error || 'เกิดข้อผิดพลาด'), 'error');
@@ -398,24 +437,21 @@
       } catch (err) {
         showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
       } finally {
-        btn.disabled = false;
-        spinner.classList.add('hidden');
-        text.textContent = 'บันทึกข้อมูล';
+        btn.disabled = false; spinner.classList.add('hidden'); text.textContent = 'บันทึกข้อมูล';
       }
     }
 
+    // ── Helpers ───────────────────────────────────────────────────
     function getConclusionBadge(conclusion) {
       if (!conclusion) return { class: 'badge-unknown', label: 'รอผล' };
       const c = conclusion.toString().trim();
-      if (c.includes('ไม่ได้')) return { class: 'badge-not-concluded', label: 'สรุปไม่ได้' };
-      if (c.includes('ได้')) return { class: 'badge-concluded', label: 'สรุปได้' };
-      if (c.includes('รอ')) return { class: 'badge-pending', label: 'รอผล' };
+      if (c.includes('ไม่สามารถ') || c.includes('ไม่ได้')) return { class: 'badge-not-concluded', label: 'สรุปไม่ได้' };
+      if (c.includes('สามารถ')    || c.includes('ได้'))    return { class: 'badge-concluded',     label: 'สรุปได้'   };
+      if (c.includes('รอ'))                                 return { class: 'badge-pending',       label: 'รอผล'     };
       return { class: 'badge-unknown', label: c || 'รอผล' };
     }
 
-    function formatDateThai(dateStr) {
-      return DateUtils.formatThaiLong(dateStr);
-    }
+    function formatDateThai(dateStr) { return DateUtils.formatThaiLong(dateStr); }
 
     function escHtml(str) {
       if (!str) return '';
@@ -432,17 +468,11 @@
     function showToast(msg, type = 'info') {
       const toast = document.getElementById('toast');
       const inner = document.getElementById('toastInner');
-      const icon = document.getElementById('toastIcon');
-      const text = document.getElementById('toastMsg');
-      const styles = {
-        success: { bg: 'bg-green-600', icon: '✅' },
-        error:   { bg: 'bg-red-600',   icon: '❌' },
-        info:    { bg: 'bg-blue-600',  icon: 'ℹ️' },
-      };
+      const styles = { success:{bg:'bg-green-600',icon:'✅'}, error:{bg:'bg-red-600',icon:'❌'}, info:{bg:'bg-blue-600',icon:'ℹ️'} };
       const s = styles[type] || styles.info;
       inner.className = `rounded-xl shadow-lg px-4 py-3 flex items-start gap-3 ${s.bg}`;
-      icon.textContent = s.icon;
-      text.textContent = msg;
+      document.getElementById('toastIcon').textContent = s.icon;
+      document.getElementById('toastMsg').textContent  = msg;
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 4000);
     }
