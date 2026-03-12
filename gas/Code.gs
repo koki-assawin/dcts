@@ -239,9 +239,18 @@ function rowToObject(row, rowIndex) {
 
 function parseDate(val) {
   if (!val) return null;
-  if (val instanceof Date) return val;
-  const d = new Date(val);
-  return isNaN(d.getTime()) ? null : d;
+  if (val instanceof Date) {
+    const d = new Date(val);
+    // ถ้า year > 2400 แสดงว่าเป็น พ.ศ. ที่ถูกเก็บเป็น CE → แปลงกลับ CE จริง
+    if (d.getFullYear() > 2400) d.setFullYear(d.getFullYear() - 543);
+    return d;
+  }
+  const d = new Date(val.toString().trim());
+  if (!isNaN(d.getTime())) {
+    if (d.getFullYear() > 2400) d.setFullYear(d.getFullYear() - 543);
+    return d;
+  }
+  return null;
 }
 
 function formatDateDisplay(val) {
