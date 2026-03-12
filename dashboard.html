@@ -319,8 +319,7 @@
       document.getElementById('dashContent').classList.add('hidden');
 
       try {
-        // แปลง CE → BE ก่อนส่ง GAS เพราะ Sheet เก็บวันที่เป็น พ.ศ.
-        const result = await API.getDashboard(DateUtils.toBE(startDate), DateUtils.toBE(endDate));
+        const result = await API.getDashboard(startDate, endDate);
         if (!result.success) {
           showToast('ไม่สามารถโหลดข้อมูล: ' + (result.error || 'ข้อผิดพลาดไม่ทราบสาเหตุ'), 'error');
           document.getElementById('dashLoading').classList.add('hidden');

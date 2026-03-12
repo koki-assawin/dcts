@@ -89,8 +89,8 @@ function getCases(startDate, endDate, caseNo) {
     if (startDate || endDate) {
       const rowDate = parseDate(row[COL.DATE]);
       if (!rowDate) continue;
-      if (startDate && rowDate < new Date(startDate)) continue;
-      if (endDate && rowDate > new Date(endDate + 'T23:59:59')) continue;
+      if (startDate && rowDate < parseDate(startDate)) continue;
+      if (endDate && rowDate > parseDate(endDate + 'T23:59:59')) continue;
     }
     results.push(rowToObject(row, i + 1));
   }
@@ -161,8 +161,8 @@ function getDashboardData(startDate, endDate) {
     if (startDate || endDate) {
       const rowDate = parseDate(row[COL.DATE]);
       if (!rowDate) continue;
-      if (startDate && rowDate < new Date(startDate)) continue;
-      if (endDate && rowDate > new Date(endDate + 'T23:59:59')) continue;
+      if (startDate && rowDate < parseDate(startDate)) continue;
+      if (endDate && rowDate > parseDate(endDate + 'T23:59:59')) continue;
     }
     stats.total++;
     const conclusion = row[COL.CONCLUSION].toString().trim();

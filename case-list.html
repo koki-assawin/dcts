@@ -313,8 +313,7 @@
 
       showLoading();
       try {
-        // แปลง CE → BE ก่อนส่ง GAS เพราะ Sheet เก็บวันที่เป็น พ.ศ.
-        const result = await API.getCases(DateUtils.toBE(startDate), DateUtils.toBE(endDate), caseNo);
+        const result = await API.getCases(startDate, endDate, caseNo);
         if (result.success) {
           allCases = result.cases || [];
           renderTable(allCases);
