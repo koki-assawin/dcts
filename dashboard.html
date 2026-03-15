@@ -6,6 +6,7 @@
   <title>Dashboard - DCTS</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <link rel="stylesheet" href="css/style.css">
   <script src="js/config.js"></script>
@@ -247,6 +248,7 @@
   </div>
 
   <script>
+    Chart.register(ChartDataLabels);
     let charts = {};
     let currentUser = null;
     let fpDashStart = null, fpDashEnd = null;
@@ -417,7 +419,15 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              anchor: 'end', align: 'top', offset: 4,
+              formatter: v => v > 0 ? v : '',
+              font: { family: 'Sarabun', size: 10, weight: '600' },
+              color: '#6366f1',
+            }
+          },
           scales: {
             y: {
               beginAtZero: true,
@@ -455,6 +465,17 @@
             legend: {
               position: 'right',
               labels: { font: { family: 'Sarabun', size: 11 }, padding: 8, boxWidth: 14 }
+            },
+            datalabels: {
+              formatter: (value, ctx) => {
+                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                const pct = value / total * 100;
+                if (pct < 4) return '';
+                return value + '\n' + pct.toFixed(1) + '%';
+              },
+              color: '#fff',
+              font: { family: 'Sarabun', size: 11, weight: '700' },
+              textAlign: 'center',
             }
           },
           cutout: '55%'
@@ -484,6 +505,17 @@
             legend: {
               position: 'right',
               labels: { font: { family: 'Sarabun', size: 11 }, padding: 8, boxWidth: 14 }
+            },
+            datalabels: {
+              formatter: (value, ctx) => {
+                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                const pct = value / total * 100;
+                if (pct < 4) return '';
+                return value + '\n' + pct.toFixed(1) + '%';
+              },
+              color: '#fff',
+              font: { family: 'Sarabun', size: 11, weight: '700' },
+              textAlign: 'center',
             }
           }
         }
@@ -511,7 +543,17 @@
           indexAxis: 'y',
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          layout: { padding: { right: 32 } },
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              anchor: 'end', align: 'right',
+              formatter: v => v,
+              font: { family: 'Sarabun', size: 11, weight: '700' },
+              color: '#374151',
+              padding: { left: 4 },
+            }
+          },
           scales: {
             x: {
               beginAtZero: true,
@@ -548,7 +590,17 @@
           indexAxis: 'y',
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          layout: { padding: { right: 32 } },
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              anchor: 'end', align: 'right',
+              formatter: v => v,
+              font: { family: 'Sarabun', size: 11, weight: '700' },
+              color: '#374151',
+              padding: { left: 4 },
+            }
+          },
           scales: {
             x: {
               beginAtZero: true,
